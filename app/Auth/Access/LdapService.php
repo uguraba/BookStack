@@ -193,8 +193,8 @@ class LdapService extends ExternalAuthService
             $this->ldap->setOption(null, LDAP_OPT_X_TLS_REQUIRE_CERT, LDAP_OPT_X_TLS_NEVER);
         }
 
-        $serverDetails = $this->parseServerString($this->config['server']);
-        $ldapConnection = $this->ldap->connect($serverDetails['host'], $serverDetails['port']);
+        $serverHost = $this->parseServerString($this->config['server']);
+        $ldapConnection = $this->ldap->connect($serverHost);
 
         if ($ldapConnection === false) {
             throw new LdapException(trans('errors.ldap_cannot_connect'));
@@ -210,22 +210,19 @@ class LdapService extends ExternalAuthService
     }
 
     /**
-     * Parse a LDAP server string and return the host and port for a connection.
+     * Parse a user provided LDAP server string into a hostname acceptable
+     * for PHPs connection function.
      * Is flexible to formats such as 'ldap.example.com:8069' or 'ldaps://ldap.example.com'.
      */
-    protected function parseServerString(string $serverString): array
+    protected function parseServerString(string $serverString): string
     {
-        $serverNameParts = explode(':', $serverString);
+        $hasProtocol = strpos($serverString, 'ldaps://') === 0 || strpos($serverString, 'ldap://') === 0 ;
 
-        // If we have a protocol just return the full string since PHP will ignore a separate port.
-        if ($serverNameParts[0] === 'ldaps' || $serverNameParts[0] === 'ldap') {
-            return ['host' => $serverString, 'port' => 389];
+        if ($hasProtocol) {
+            return $serverString;
         }
 
-        // Otherwise, extract the port out
-        $hostName = $serverNameParts[0];
-        $ldapPort = (count($serverNameParts) > 1) ? intval($serverNameParts[1]) : 389;
-        return ['host' => $hostName, 'port' => $ldapPort];
+        return 'ldap://' . $serverString;
     }
 
     /**

@@ -11,13 +11,11 @@ class Ldap
 
     /**
      * Connect to a LDAP server.
-     * @param string $hostName
-     * @param int    $port
      * @return resource
      */
-    public function connect($hostName, $port)
+    public function connect(string $uri)
     {
-        return ldap_connect($hostName, $port);
+        return ldap_connect($uri);
     }
 
     /**
